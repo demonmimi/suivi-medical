@@ -1,66 +1,36 @@
 package com.isetdjerba.hopital.suivi_medical.model;
 
-
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
-import lombok.Data;
-
-import java.time.LocalDate;
-import java.util.ArrayList;
+import lombok.*;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import java.util.Date;
 import java.util.List;
 
 @Entity
 @Data
+@NoArgsConstructor
+@AllArgsConstructor
 public class Projet {
-    //les setters
     @Id
-    @GeneratedValue(strategy= GenerationType.IDENTITY)
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-    private String nom;
-    private LocalDate dateDebut;
-    private LocalDate dateFin;
 
-    // Relation ManyToOne avec Departement
+    @Column(nullable = false)
+    private String titre;
+
+    private String description;
+
+    private Date dateDebut;
+    private Date dateFin;
+    private String statut;
+
+    // Many projects -> one departement (project owns FK)
     @ManyToOne
     @JoinColumn(name = "departement_id")
     private Departement departement;
 
-    // Relation ManyToMany avec Employe
-    @ManyToMany
-    @JoinTable(
-            name = "employe_projet",
-            joinColumns = @JoinColumn(name = "projet_id"),
-            inverseJoinColumns = @JoinColumn(name = "employe_id")
-    )
+    // inverse side of many-to-many, Employe owns the join table
+    @ManyToMany(mappedBy = "projets")
     @JsonIgnore
-    private List<Employe> employes = new ArrayList<>();
-
-    //les getters
-    public Long getId() {
-        return id;
-    }
-
-    public String getNom() {
-        return nom;
-    }
-
-    public LocalDate getDateDebut() {
-        return dateDebut;
-    }
-
-    public LocalDate getDateFin() {
-        return dateFin;
-    }
-
-    public Departement getDepartement() {
-        return departement;
-    }
-
-    public List<Employe> getEmployes() {
-        return employes;
-    }
-
-    public void setEmployes(ArrayList<Employe> employes) {
-        this.employes = employes;
-    }
+    private List<Employe> employes;
 }

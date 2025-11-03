@@ -1,55 +1,32 @@
 package com.isetdjerba.hopital.suivi_medical.controller;
 
+import com.isetdjerba.hopital.suivi_medical.model.Projet;
 import com.isetdjerba.hopital.suivi_medical.service.DepartementProjetService;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import java.util.List;
 
 @RestController
 @RequestMapping("/departement-projet")
 public class DepartementProjetController {
-    @Autowired
-    DepartementProjetService departementProjetService;
 
-    // Affecter projet à département
-    @PostMapping("/affecter/{projetId}/departement/{departementId}")
-    public ResponseEntity<?> affecterProjetAuDepartement(@PathVariable Long projetId,
-                                                         @PathVariable Long departementId) {
-        try {
-            return ResponseEntity.ok(departementProjetService.affecterProjetAuDepartement(projetId, departementId));
-        } catch (RuntimeException e) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
-        }
+    private final DepartementProjetService service;
+
+    public DepartementProjetController(DepartementProjetService service) {
+        this.service = service;
     }
 
-    // Retirer projet d’un département
-    @PutMapping("/retirer/{projetId}")
-    public ResponseEntity<?> retirerProjetDuDepartement(@PathVariable Long projetId) {
-        try {
-            return ResponseEntity.ok(departementProjetService.retirerProjetDuDepartement(projetId));
-        } catch (RuntimeException e) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
-        }
+    @PostMapping("/create")
+    public Projet create(@RequestParam Long departementId, @RequestBody Projet projet) {
+        return service.createProjetUnderDepartement(departementId, projet);
     }
 
-    // Lister projets par département
-    @GetMapping("/departement/{departementId}/projets")
-    public ResponseEntity<?> getProjetsByDepartement(@PathVariable Long departementId) {
-        try {
-            return ResponseEntity.ok(departementProjetService.getProjetsByDepartement(departementId));
-        } catch (RuntimeException e) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
-        }
+    @PutMapping("/move")
+    public Projet move(@RequestParam Long projetId, @RequestParam Long newDepartementId) {
+        return service.moveProjetToDepartement(projetId, newDepartementId);
     }
 
-    // Chercher département d’un projet
-    @GetMapping("/projet/{projetId}/departement")
-    public ResponseEntity<?> getDepartementByProjet(@PathVariable Long projetId) {
-        try {
-            return ResponseEntity.ok(departementProjetService.getDepartementByProjet(projetId));
-        } catch (RuntimeException e) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
-        }
+    @GetMapping("/departement/{id}/projets")
+    public List<Projet> listByDepartement(@PathVariable Long id) {
+        return service.listProjetsByDepartement(id);
     }
 }

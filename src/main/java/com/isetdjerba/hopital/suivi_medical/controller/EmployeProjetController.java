@@ -1,59 +1,38 @@
 package com.isetdjerba.hopital.suivi_medical.controller;
 
+import com.isetdjerba.hopital.suivi_medical.model.Projet;
+import com.isetdjerba.hopital.suivi_medical.model.Employe;
 import com.isetdjerba.hopital.suivi_medical.service.EmployeProjetService;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import java.util.List;
 
 @RestController
 @RequestMapping("/employe-projet")
 public class EmployeProjetController {
-    @Autowired
-    EmployeProjetService employeProjetService;
-    // Affecter un employé à un projet
-    @PostMapping("/affecter/{projetId}/a/{employeId}")
-    public ResponseEntity<String> affecterEmployeAProjet(
-            @PathVariable Long projetId,
-            @PathVariable Long employeId) {
-        try {
-            employeProjetService.affecterEmployeAProjet(projetId, employeId);
-            return ResponseEntity.ok("Employé ajouté au projet avec succès");
-        } catch (RuntimeException e) {
-            return ResponseEntity.badRequest().body(e.getMessage());
-        }
+
+    private final EmployeProjetService service;
+
+    public EmployeProjetController(EmployeProjetService service) {
+        this.service = service;
     }
 
-    // Retirer un employé d’un projet
-    @DeleteMapping("/retirer/{projetId}/de/{employeId}")
-    public ResponseEntity<String> retirerEmployeDeProjet(
-            @PathVariable Long projetId,
-            @PathVariable Long employeId) {
-        try {
-            employeProjetService.retirerEmployeDeProjet(projetId, employeId);
-            return ResponseEntity.ok("Employé retiré du projet avec succès");
-        } catch (RuntimeException e) {
-            return ResponseEntity.badRequest().body(e.getMessage());
-        }
+    @PostMapping("/assign")
+    public void assign(@RequestParam Long employeId, @RequestParam Long projetId) {
+        service.assignEmployeToProjet(employeId, projetId);
     }
 
-    // Liste des employés d’un projet
-    @GetMapping("/projet/{projetId}/employes")
-    public ResponseEntity<?> getEmployesByProjet(@PathVariable Long projetId) {
-        try {
-            return ResponseEntity.ok(employeProjetService.getEmployesByProjet(projetId));
-        } catch (RuntimeException e) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
-        }
+    @PostMapping("/remove")
+    public void remove(@RequestParam Long employeId, @RequestParam Long projetId) {
+        service.removeEmployeFromProjet(employeId, projetId);
     }
 
-    // Liste des projets d’un employé
-    @GetMapping("/employe/{employeId}/projets")
-    public ResponseEntity<?> getProjetsByEmploye(@PathVariable Long employeId) {
-        try {
-            return ResponseEntity.ok(employeProjetService.getProjetsByEmploye(employeId));
-        } catch (RuntimeException e) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
-        }
+    @GetMapping("/employe/{id}/projets")
+    public List<Projet> getProjetsByEmploye(@PathVariable Long id) {
+        return service.getProjetsByEmploye(id);
+    }
+
+    @GetMapping("/projet/{id}/employes")
+    public List<Employe> getEmployesByProjet(@PathVariable Long id) {
+        return service.getEmployesByProjet(id);
     }
 }

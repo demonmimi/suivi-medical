@@ -19,13 +19,16 @@ public class EmployeController {
 
     @GetMapping
     public List<Employe> getAll() {
-        return service.listerEmployes();
+        return service.getAll();
     }
 
     @GetMapping("/{id}")
     public ResponseEntity<Employe> getById(@PathVariable Long id) {
-        return service.trouverParId(id).map(ResponseEntity::ok)
-                .orElse(ResponseEntity.notFound().build());
+        Employe employe = service.getById(id);
+        if (employe == null) {
+            return ResponseEntity.notFound().build();
+        }
+        return ResponseEntity.ok(employe);
     }
 
     @GetMapping("/search")

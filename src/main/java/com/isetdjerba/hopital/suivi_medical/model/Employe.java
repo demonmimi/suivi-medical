@@ -1,58 +1,34 @@
 package com.isetdjerba.hopital.suivi_medical.model;
 
-
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
-
-import java.util.ArrayList;
+import lombok.*;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import java.util.List;
 
 @Entity
 @Data
+@NoArgsConstructor
+@AllArgsConstructor
 public class Employe {
-    //les setters
     @Id
-    @GeneratedValue(strategy=GenerationType.IDENTITY)
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
+
+    @Column(nullable = false)
     private String nom;
+
     private String prenom;
+    private String poste;
     private String email;
-    private String tel;
+    private Double salaire;
 
-    // Relation ManyToMany avec Projet
-    @ManyToMany(mappedBy = "employes")
+    // owning side of ManyToMany
+    @ManyToMany
+    @JoinTable(
+            name = "employe_projet",
+            joinColumns = @JoinColumn(name = "employe_id"),
+            inverseJoinColumns = @JoinColumn(name = "projet_id")
+    )
     @JsonIgnore
-    private List<Projet> projets = new ArrayList<>();
-
-    //les getters et setters
-    public Long getId() {
-        return id;
-    }
-
-    public String getNom() {
-        return nom;
-    }
-
-    public String getPrenom() {
-        return prenom;
-    }
-
-    public String getEmail() {
-        return email;
-    }
-
-    public String getTel() {
-        return tel;
-    }
-
-    public List<Projet> getProjets() {
-        return projets;
-    }
-
-    public void setProjets(ArrayList<Projet> projets) {
-        this.projets = projets;
-    }
+    private List<Projet> projets;
 }

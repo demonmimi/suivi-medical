@@ -1,40 +1,26 @@
 package com.isetdjerba.hopital.suivi_medical.model;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
-import lombok.Setter;
-
-import java.util.ArrayList;
+import lombok.*;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import java.util.List;
 
 @Entity
-//@Data
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
 public class Departement {
     @Id
-    @GeneratedValue(strategy= GenerationType.IDENTITY)
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-    @Setter
+
+    @Column(nullable = false, unique = true)
     private String nom;
 
-    // Relation OneToMany avec Projet
-    @OneToMany(mappedBy = "departement")
+    private String description;
+
+    // inverse side of OneToMany -> Projet owns ManyToOne
+    @OneToMany(mappedBy = "departement", cascade = CascadeType.ALL, orphanRemoval = true)
     @JsonIgnore
-    private List<Projet> projets = new ArrayList<>();
-
-    //les getters et les setters
-    public Long getId() {
-        return id;
-    }
-
-    public String getNom() {
-        return nom;
-    }
-
-    public List<Projet> getProjets() {
-        return projets;
-    }
-
-    public void setProjets(ArrayList<Projet> projets) {
-        this.projets = projets;
-    }
+    private List<Projet> projets;
 }

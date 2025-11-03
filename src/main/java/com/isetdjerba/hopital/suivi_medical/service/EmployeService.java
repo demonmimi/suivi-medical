@@ -1,153 +1,61 @@
 package com.isetdjerba.hopital.suivi_medical.service;
 
+import aj.org.objectweb.asm.commons.Remapper;
 import com.isetdjerba.hopital.suivi_medical.model.Employe;
 import com.isetdjerba.hopital.suivi_medical.repository.EmployeRepository;
-import com.isetdjerba.hopital.suivi_medical.repository.ProjetRepository;
-import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
-import java.util.Optional;
 
 @Service
 public class EmployeService {
 
-    @Autowired
-    private EmployeRepository employeRepository;
+    private final EmployeRepository employeRepository;
 
-    @Autowired
-    private ProjetRepository projetRepository;
-
-    // CREATION EMPLOYE
-    public Employe createEmploye(Employe employe) {
-        if (employe == null) {
-            throw new RuntimeException("L'employé ne peut pas être null");
-        }
-
-        // Vérification email
-        String email = employe.getEmail();
-        if (email == null || email.trim().isEmpty()) {
-            throw new RuntimeException("L'email de l'employé est obligatoire");
-        }
-        // Regex pour format email standard
-        if (!email.matches("^[\\w-\\.]+@([\\w-]+\\.)+[\\w-]{2,4}$")) {
-            throw new RuntimeException("L'email n'est pas valide");
-        }
-
-        // Vérifier unicité de l'email
-        Optional<Employe> existing = employeRepository.findByEmail(email);
-        if (existing.isPresent()) {
-            throw new RuntimeException("Un employé avec cet email existe déjà");
-        }
-
-        // Vérification téléphone (8 chiffres)
-        String tel = employe.getTel();
-        if (tel == null || !tel.matches("^\\d{8}$")) {
-            throw new RuntimeException("Le numéro de téléphone doit comporter exactement 8 chiffres");
-        }
-
-        // Sauvegarde de l'employé
-        return employeRepository.save(employe);
+    public EmployeService(EmployeRepository employeRepository) {
+        this.employeRepository = employeRepository;
     }
 
-
-    // LECTURE TOUS LES EMPLOYES
-    public List<Employe> getAllEmployes() {
-        List<Employe> employes = employeRepository.findAll();
-        if (employes.isEmpty()) {
-            throw new RuntimeException("Aucun employé trouvé");
-        }
-        return employes;
+    // Ajouter un employé
+    public Employe ajouterEmploye(Employe e) {
+        return employeRepository.save(e);
     }
 
-    // LECTURE D'UN EMPLOYE VIA SON ID
-    public Employe getEmployeById(Long id) {
-        Optional<Employe> existingEmploye = employeRepository.findById(id);
-
-        if (existingEmploye.isEmpty()) {
-            throw new RuntimeException("Employé non trouvé");
-        }
-
-        return existingEmploye.get();
+    // Lister tous les employés
+    public List<Employe> getAll() {
+        return employeRepository.findAll();
     }
 
-
-    // MAJ D'UN EMPLOYE
-    public Employe updateEmploye(Long id, Employe upEmploye) {
-        // Vérifier si l'employé existe
-        Optional<Employe> existingOpt = employeRepository.findById(id);
-        if (existingOpt.isEmpty()) {
-            throw new RuntimeException("Employé non trouvé");
-        }
-        Employe existing = existingOpt.get();
-
-        // Validation email
-        String email = upEmploye.getEmail();
-        if (email == null || email.trim().isEmpty()) {
-            throw new RuntimeException("L'email de l'employé est obligatoire");
-        }
-        if (!email.matches("^[\\w-\\.]+@([\\w-]+\\.)+[\\w-]{2,4}$")) {
-            throw new RuntimeException("L'email n'est pas valide");
-        }
-
-        // Vérifier unicité de l'email
-        Optional<Employe> emailExist = employeRepository.findByEmail(email);
-        if (emailExist.isPresent() && !emailExist.get().getId().equals(id)) {
-            throw new RuntimeException("Un employé avec cet email existe déjà");
-        }
-
-        // Validation téléphone (exactement 8 chiffres)
-        String tel = upEmploye.getTel();
-        if (tel == null || !tel.matches("^\\d{8}$")) {
-            throw new RuntimeException("Le numéro de téléphone doit comporter exactement 8 chiffres");
-        }
-
-        // Mise à jour des informations
-        existing.setNom(upEmploye.getNom());
-        existing.setPrenom(upEmploye.getPrenom());
-        existing.setEmail(email);
-        existing.setTel(tel);
-
-        // Sauvegarde
-        return employeRepository.save(existing);
+    // Chercher un employé par ID
+    public Employe getById(Long id) {
+        return employeRepository.findById(id)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Employé non trouvé"));
     }
 
-    // SUPPRESSION D'UN EMPLOYE
-    public void deleteEmploye(Long id) {
-        Optional<Employe> existing = employeRepository.findById(id);
+    // Supprimer un employé (avec vérification des projets)
+    public void supprimerEmploye(Long id) {
+        Employe e = employeRepository.findById(id)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Employé non trouvé"));
 
-        if (existing.isEmpty()) {
-            throw new RuntimeException("Employé non trouvé avec ID: " + id);
-        }
-
-        Employe employe = existing.get();
-
-        // Vérifier si l'employé est affecté à un ou plusieurs projets
-        if (employe.getProjets() != null && !employe.getProjets().isEmpty()) {
-            throw new RuntimeException("Impossible de supprimer l'employé (ID: " + id + ") car il est encore affecté à des projets");
+        if (e.getProjets() != null && !e.getProjets().isEmpty()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                    "Impossible de supprimer : cet employé est encore affecté à des projets !");
         }
 
         employeRepository.deleteById(id);
     }
-
-    // RECHERCHE D'UN EMPLOYE VIA UN MOT CLE: le nom seulement
-    public List<Employe> searchEmployes(String keyword) {
-        List<Employe> resultats = employeRepository.findByNomContainingIgnoreCase(keyword);
-        if (resultats.isEmpty()) {
-            throw new RuntimeException("Aucun employé trouvé pour le mot-clé: " + keyword);
-        }
-        return resultats;
-    }
-
-    // RECHERCHE D'UN EMPLOYE VIA UN MOT CLE: le nomou le prénom ou l'email ou le téléphone
-    public List<Employe> searchEmployes2(String keyword) {
-        List<Employe> resultats = employeRepository.searchByKeyword(keyword);
-
-        if (resultats.isEmpty()) {
-            throw new RuntimeException("Aucun employé trouvé pour le mot-clé: " + keyword);
+    // Modifier un employé
+    public Employe modifierEmploye(Employe e) {
+        if (!employeRepository.existsById(e.getId())) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Employé non trouvé");
         }
 
-        return resultats;
+        return employeRepository.save(e);
     }
-
+    // Rechercher des employés par nom
+    public List<Employe> rechercherParNom(String nom) {
+        return employeRepository.findByNomContainingIgnoreCase(nom);
+    }
 }

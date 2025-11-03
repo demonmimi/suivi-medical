@@ -4,104 +4,57 @@ import com.isetdjerba.hopital.suivi_medical.model.Employe;
 import com.isetdjerba.hopital.suivi_medical.model.Projet;
 import com.isetdjerba.hopital.suivi_medical.repository.EmployeRepository;
 import com.isetdjerba.hopital.suivi_medical.repository.ProjetRepository;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.server.ResponseStatusException;
+import org.springframework.http.HttpStatus;
 
-import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 
 @Service
 public class EmployeProjetService {
 
-    @Autowired
-    EmployeRepository employeRepository;
-    @Autowired
-    ProjetRepository projetRepository;
+    private final EmployeRepository employeRepo;
+    private final ProjetRepository projetRepo;
 
-    // Affecter un employé à un projet
-    public void affecterEmployeAProjet(Long projetId, Long employeId) {
-        // Chercher le projet
-        Optional<Projet> optionalProjet = projetRepository.findById(projetId);
-        if (optionalProjet.isEmpty()) {
-            throw new RuntimeException("Projet introuvable");
-        }
-        Projet projet = optionalProjet.get();
-
-        // Chercher l'employé
-        Optional<Employe> optionalEmploye = employeRepository.findById(employeId);
-        if (optionalEmploye.isEmpty()) {
-            throw new RuntimeException("Employé introuvable");
-        }
-        Employe employe = optionalEmploye.get();
-
-        // Vérifier si l'employé est déjà affecté
-        if (projet.getEmployes().contains(employe)) {
-            throw new RuntimeException("Cet employé est déjà affecté à ce projet");
-        }
-
-        // Ajouter l'employé au projet
-        projet.getEmployes().add(employe);
-
-        // Ajouter le projet à l'employé pour maintenir la cohérence bidirectionnelle
-        employe.getProjets().add(projet);
-
-        // Sauvegarder les deux entités
-        projetRepository.save(projet);
-        employeRepository.save(employe);
+    public EmployeProjetService(EmployeRepository employeRepo, ProjetRepository projetRepo) {
+        this.employeRepo = employeRepo;
+        this.projetRepo = projetRepo;
     }
 
-    // Retirer un employé d'un projet
-    public void retirerEmployeDeProjet(Long projetId, Long employeId) {
-        // Chercher le projet
-        Optional<Projet> optionalProjet = projetRepository.findById(projetId);
-        if (optionalProjet.isEmpty()) {
-            throw new RuntimeException("Projet introuvable");
-        }
-        Projet projet = optionalProjet.get();
+    @Transactional
+    public void assignEmployeToProjet(Long employeId, Long projetId) {
+        Employe e = employeRepo.findById(employeId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Employe non trouvé"));
+        Projet p = projetRepo.findById(projetId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Projet non trouvé"));
 
-        // Chercher l'employé
-        Optional<Employe> optionalEmploye = employeRepository.findById(employeId);
-        if (optionalEmploye.isEmpty()) {
-            throw new RuntimeException("Employé introuvable");
-        }
-        Employe employe = optionalEmploye.get();
-
-        // Vérifier si l'employé est bien affecté au projet
-        if (!projet.getEmployes().contains(employe)) {
-            throw new RuntimeException("Cet employé n’est pas affecté à ce projet");
-        }
-
-        // Retirer l'employé du projet
-        projet.getEmployes().remove(employe);
-
-        // Retirer le projet de la liste de l'employé pour maintenir la cohérence
-        employe.getProjets().remove(projet);
-
-        // Sauvegarder les deux entités
-        projetRepository.save(projet);
-        employeRepository.save(employe);
+        if (e.getProjets() != null && e.getProjets().contains(p)) return; // déjà assigné
+        e.getProjets().add(p);
+        employeRepo.save(e);
     }
 
-    //  Lister les employés d’un projet
-    public List<Employe> getEmployesByProjet(Long projetId) {
-        Optional<Projet> optionalProjet = projetRepository.findById(projetId);
-        if (optionalProjet.isEmpty()) {
-            throw new RuntimeException("Projet introuvable avec ID: " + projetId);
-        }
+    @Transactional
+    public void removeEmployeFromProjet(Long employeId, Long projetId) {
+        Employe e = employeRepo.findById(employeId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Employe non trouvé"));
+        Projet p = projetRepo.findById(projetId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Projet non trouvé"));
 
-        Projet projet = optionalProjet.get();
-        return new ArrayList<>(projet.getEmployes());
+        if (e.getProjets() != null && e.getProjets().removeIf(pr -> pr.getId().equals(projetId))) {
+            employeRepo.save(e);
+        } else {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "L'employé n'est pas affecté au projet");
+        }
     }
 
-    // Lister les projets d’un employé
     public List<Projet> getProjetsByEmploye(Long employeId) {
-        Optional<Employe> optionalEmploye = employeRepository.findById(employeId);
-        if (optionalEmploye.isEmpty()) {
-            throw new RuntimeException("Employé introuvable avec ID: " + employeId);
-        }
+        Employe e = employeRepo.findById(employeId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Employe non trouvé"));
+        return e.getProjets();
+    }
 
-        Employe employe = optionalEmploye.get();
-        return new ArrayList<>(employe.getProjets());
+    public List<Employe> getEmployesByProjet(Long projetId) {
+        return employeRepo.findByProjetsId(projetId);
     }
 }

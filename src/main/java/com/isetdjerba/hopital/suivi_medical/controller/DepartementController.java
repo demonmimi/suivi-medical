@@ -1,7 +1,7 @@
 package com.isetdjerba.hopital.suivi_medical.controller;
 
 import com.isetdjerba.hopital.suivi_medical.model.Departement;
-import com.isetdjerba.hopital.suivi_medical.service.DepartementService;
+import com.isetdjerba.hopital.suivi_medical.service.*;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -19,13 +19,16 @@ public class DepartementController {
 
     @GetMapping
     public List<Departement> getAll() {
-        return service.listerDepartements();
+        return service.getAll();
     }
 
     @GetMapping("/{id}")
     public ResponseEntity<Departement> getById(@PathVariable Long id) {
-        return service.trouverParId(id).map(ResponseEntity::ok)
-                .orElse(ResponseEntity.notFound().build());
+        Departement  departement = service.getById(id);
+        if (departement == null) {
+            return ResponseEntity.notFound().build();
+        }
+        return ResponseEntity.ok(departement);
     }
 
     @GetMapping("/search")

@@ -19,13 +19,13 @@ public class ProjetController {
 
     @GetMapping
     public List<Projet> getAll() {
-        return service.listerProjets();
+        return service.getAll();
     }
 
     @GetMapping("/{id}")
     public ResponseEntity<Projet> getById(@PathVariable Long id) {
-        return service.trouverParId(id).map(ResponseEntity::ok)
-                .orElse(ResponseEntity.notFound().build());
+       Projet projet = service.getById(id);
+        return projet != null ? ResponseEntity.ok(projet) : ResponseEntity.notFound().build();
     }
 
     @GetMapping("/search")
