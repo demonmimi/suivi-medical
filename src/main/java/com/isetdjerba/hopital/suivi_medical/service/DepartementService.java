@@ -51,11 +51,12 @@ public class DepartementService {
         departementRepository.deleteById(id);
     }
     // Modifier un département
-    public Departement modifierDepartement(Departement d) {
-        Departement existingDepartement = departementRepository.findById(d.getId())
+    public Departement modifierDepartement(Long id, Departement d) {
+        Departement existingDepartement = departementRepository.findById(id)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Département non trouvé"));
 
         existingDepartement.setNom(d.getNom());
+    
         existingDepartement.setDescription(d.getDescription());
         return departementRepository.save(existingDepartement);
     }

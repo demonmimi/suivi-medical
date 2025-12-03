@@ -34,23 +34,31 @@ public class EmployeService {
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Employé non trouvé"));
     }
 
-    // Supprimer un employé (avec vérification des projets)
+    // Supprimer un employé (avec suppression automatique des projets)
     public void supprimerEmploye(Long id) {
         Employe e = employeRepository.findById(id)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Employé non trouvé"));
 
-        if (e.getProjets() != null && !e.getProjets().isEmpty()) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
-                    "Impossible de supprimer : cet employé est encore affecté à des projets !");
-        }
+        // Automatically remove employee from all projects before deletion
+        employeRepository.removeEmployeFromAllProjects(id);
+        System.out.println("Removed employee " + id + " from all projects");
 
         employeRepository.deleteById(id);
+        System.out.println("Deleted employee " + id);
     }
     // Modifier un employé
     public Employe modifierEmploye(Employe e) {
         if (!employeRepository.existsById(e.getId())) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Employé non trouvé");
         }
+        e.setNom(e.getNom());
+        e.setId(e.getId());
+        e.setProjets(e.getProjets());
+        e.setDepartement(e.getDepartement());
+        e.setPoste(e.getPoste());
+        e.setEmail(e.getEmail());
+        e.setSalaire(e.getSalaire());
+        e.setPrenom(e.getPrenom());
 
         return employeRepository.save(e);
     }

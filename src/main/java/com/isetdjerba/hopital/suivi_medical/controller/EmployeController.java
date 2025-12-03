@@ -3,6 +3,7 @@ package com.isetdjerba.hopital.suivi_medical.controller;
 import com.isetdjerba.hopital.suivi_medical.model.Employe;
 import com.isetdjerba.hopital.suivi_medical.service.EmployeService;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -17,12 +18,15 @@ public class EmployeController {
         this.service = service;
     }
 
+    // All authenticated roles can consult
     @GetMapping
+    @PreAuthorize("hasAnyRole('ADMIN', 'RESPONSABLE_PROJET', 'DOCTEUR', 'INFIRMIER', 'EMPLOYE')")
     public List<Employe> getAll() {
         return service.getAll();
     }
 
     @GetMapping("/{id}")
+    @PreAuthorize("hasAnyRole('ADMIN', 'RESPONSABLE_PROJET', 'DOCTEUR', 'INFIRMIER', 'EMPLOYE')")
     public ResponseEntity<Employe> getById(@PathVariable Long id) {
         Employe employe = service.getById(id);
         if (employe == null) {
@@ -32,22 +36,28 @@ public class EmployeController {
     }
 
     @GetMapping("/search")
+    @PreAuthorize("hasAnyRole('ADMIN', 'RESPONSABLE_PROJET', 'DOCTEUR', 'INFIRMIER', 'EMPLOYE')")
     public List<Employe> searchByName(@RequestParam String nom) {
         return service.rechercherParNom(nom);
     }
 
+    // Only ADMIN can modify
     @PostMapping
+    @PreAuthorize("hasRole('ADMIN')")
     public Employe create(@RequestBody Employe employe) {
         return service.ajouterEmploye(employe);
     }
 
     @PutMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
     public Employe update(@PathVariable Long id, @RequestBody Employe employe) {
         employe.setId(id);
+         
         return service.modifierEmploye(employe);
     }
 
     @DeleteMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
     public void delete(@PathVariable Long id) {
         service.supprimerEmploye(id);
     }

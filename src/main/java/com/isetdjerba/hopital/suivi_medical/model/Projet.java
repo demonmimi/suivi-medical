@@ -33,4 +33,16 @@ public class Projet {
     @ManyToMany(mappedBy = "projets")
     @JsonIgnore
     private List<Employe> employes;
+
+    @ManyToMany
+    @JoinTable(
+            name = "projet_patient",
+            joinColumns = @JoinColumn(name = "projet_id"),
+            inverseJoinColumns = @JoinColumn(name = "patient_id")
+    )
+    @JsonIgnore
+    private List<Patient> patients;
+
+    private Double progression; // Percentage 0-100
+    private String priorite; // HAUTE, MOYENNE, BASSE
 }

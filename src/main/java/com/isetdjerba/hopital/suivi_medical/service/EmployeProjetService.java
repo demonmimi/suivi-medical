@@ -29,7 +29,14 @@ public class EmployeProjetService {
         Projet p = projetRepo.findById(projetId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Projet non trouvé"));
 
-        if (e.getProjets() != null && e.getProjets().contains(p)) return; // déjà assigné
+        if (e.getProjets() == null) {
+            e.setProjets(new java.util.ArrayList<>());
+        }
+        
+        if (e.getProjets().stream().anyMatch(proj -> proj.getId().equals(projetId))) {
+            return; // déjà assigné
+        }
+        
         e.getProjets().add(p);
         employeRepo.save(e);
     }
@@ -38,7 +45,9 @@ public class EmployeProjetService {
     public void removeEmployeFromProjet(Long employeId, Long projetId) {
         Employe e = employeRepo.findById(employeId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Employe non trouvé"));
-        Projet p = projetRepo.findById(projetId)
+        
+        // Verify project exists
+        projetRepo.findById(projetId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Projet non trouvé"));
 
         if (e.getProjets() != null && e.getProjets().removeIf(pr -> pr.getId().equals(projetId))) {

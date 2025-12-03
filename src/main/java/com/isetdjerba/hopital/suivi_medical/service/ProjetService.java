@@ -52,8 +52,35 @@ public class ProjetService {
         existingProjet.setTitre(p.getTitre());
         existingProjet.setDescription(p.getDescription());
         existingProjet.setDepartement(p.getDepartement());
+        existingProjet.setDateDebut(p.getDateDebut());
+        existingProjet.setDateFin(p.getDateFin());
+        existingProjet.setStatut(p.getStatut());
         return projetRepository.save(existingProjet);
     }
+
+    // Suivre projet médical - Update status and progression
+    public Projet suivreProjet(Long id, String statut, Double progression) {
+        Projet projet = projetRepository.findById(id)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Projet non trouvé"));
+
+        if (statut != null) {
+            projet.setStatut(statut);
+        }
+        if (progression != null) {
+            if (progression < 0 || progression > 100) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "La progression doit être entre 0 et 100");
+            }
+            projet.setProgression(progression);
+        }
+        return projetRepository.save(projet);
+    }
+
+    // Get detailed project info for tracking
+    public Projet getProjetDetails(Long id) {
+        return projetRepository.findById(id)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Projet non trouvé"));
+    }
+
     // Rechercher des projets par titre
     public List<Projet> rechercherParTitre(String titre) {
         return projetRepository.findByTitreContainingIgnoreCase(titre);

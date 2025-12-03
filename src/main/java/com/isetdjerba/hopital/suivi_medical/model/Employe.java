@@ -21,6 +21,9 @@ public class Employe {
     private String poste;
     private String email;
     private Double salaire;
+    @ManyToOne
+    @JoinColumn(name = "departement_id")
+    private Departement departement;
 
     // owning side of ManyToMany
     @ManyToMany
